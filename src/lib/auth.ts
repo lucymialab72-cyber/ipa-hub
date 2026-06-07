@@ -8,13 +8,21 @@ export interface UserProfile {
   createdAt: string
 }
 
-export function encodeToken(user: UserProfile): string {
-  return btoa(JSON.stringify(user))
-}
-
-export function decodeToken(token: string): UserProfile | null {
+// Client-side: fetch user from API
+export async function fetchUser(): Promise<UserProfile | null> {
   try {
-    return JSON.parse(atob(token)) as UserProfile
+    const res = await fetch('/api/auth/me')
+    if (!res.ok) return null
+    const data = await res.json()
+    return {
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email || '',
+      phone: data.user.phone,
+      state: data.user.state || '',
+      agentType: data.user.agent_type || 'exploring',
+      createdAt: data.user.created_at,
+    }
   } catch {
     return null
   }

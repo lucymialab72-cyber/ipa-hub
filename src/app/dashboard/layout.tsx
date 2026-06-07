@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { decodeToken, type UserProfile } from '@/lib/auth'
+import { fetchUser, type UserProfile } from '@/lib/auth'
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: '🏠', label: 'Dashboard', exact: true },
@@ -21,22 +21,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    const cookie = document.cookie.split('; ').find(c => c.startsWith('ipa-hub-token='))
-    if (!cookie) {
-      router.push('/login')
-      return
-    }
-    const token = cookie.split('=')[1]
-    const decoded = decodeToken(token)
-    if (!decoded) {
-      router.push('/login')
-      return
-    }
-    setUser(decoded)
+    fetchUser().then(u => {
+      if (!u) {
+        router.push('/login')
+        return
+      }
+      setUser(u)
+    })
   }, [router])
 
   function handleLogout() {
-    document.cookie = 'ipa-hub-token=; path=/; max-age=0'
+    document.cookie = 'ipa-hub-session=; path=/; max-age=0'
+    localStorage.removeItem('ipa_hub_device_token')
     router.push('/')
   }
 

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { decodeToken, type UserProfile } from '@/lib/auth'
+import { fetchUser, type UserProfile } from '@/lib/auth'
 
 const QUICK_ACTIONS = [
   { href: '/dashboard/learn/start-agency', icon: '📖', label: 'How to Start Your Agency', desc: 'The complete beginner\'s guide', badge: 'New' },
@@ -57,12 +57,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null)
 
   useEffect(() => {
-    const cookie = document.cookie.split('; ').find(c => c.startsWith('ipa-hub-token='))
-    if (cookie) {
-      const token = cookie.split('=')[1]
-      const decoded = decodeToken(token)
-      if (decoded) setUser(decoded)
-    }
+    fetchUser().then(u => { if (u) setUser(u) })
   }, [])
 
   const agentGreeting: Record<string, string> = {

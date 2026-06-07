@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { decodeToken, US_STATES, AGENT_TYPES, encodeToken, type UserProfile } from '@/lib/auth'
+import { fetchUser, US_STATES, AGENT_TYPES, type UserProfile } from '@/lib/auth'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -11,23 +11,16 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    const cookie = document.cookie.split('; ').find(c => c.startsWith('ipa-hub-token='))
-    if (cookie) {
-      const token = cookie.split('=')[1]
-      const decoded = decodeToken(token)
-      if (decoded) {
-        setUser(decoded)
-        setForm(decoded)
-      }
-    }
+    fetchUser().then(u => {
+      if (u) { setUser(u); setForm(u) }
+    })
   }, [])
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!user) return
+    // TODO: Save profile updates to Supabase
     const updated = { ...user, ...form } as UserProfile
-    const token = encodeToken(updated)
-    document.cookie = `ipa-hub-token=${token}; path=/; max-age=${60 * 60 * 24 * 30}`
     setUser(updated)
     setEditing(false)
     setSaved(true)
@@ -35,7 +28,8 @@ export default function ProfilePage() {
   }
 
   function handleLogout() {
-    document.cookie = 'ipa-hub-token=; path=/; max-age=0'
+    document.cookie = 'ipa-hub-session=; path=/; max-age=0'
+    localStorage.removeItem('ipa_hub_device_token')
     router.push('/')
   }
 
